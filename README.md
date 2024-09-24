@@ -50,16 +50,63 @@ The following parameters can be adjusted in the `PSOManager` script:
 
 ## Classes and Methods
 
-### `FourLinkRobot`
-- **Method: `Update`**: Updates the kinematics of the robotic arm every frame.
-- **Method: `CalculateKinematics`**: Calculates the position and orientation of each link using forward kinematics.
 
-### `PSOManager`
-- **Method: `Start`**: Initializes the PSO process.
-- **Method: `Run`**: Manages the main PSO loop and updates particles based on fitness.
+### Class: `FourLinkRobot`
+This class represents a 4 Degrees of Freedom (4DOF) robotic arm. It is responsible for managing the arm's kinematics and updating its position and orientation in the simulation environment.
 
-### `RA_PSO`
-- **Method: `FitnessFunction`**: Evaluates the fitness of each set of joint angles based on penalties.
+#### Methods:
+- `Update()`
+    - This method is called every frame to update the state of the robotic arm. It calculates the current joint angles and updates the kinematic properties of each joint and link.
+
+- `CalculateKinematics()`
+    - This method computes the forward kinematics of the robotic arm. It calculates the position and orientation of each link based on the joint angles using transformation matrices. The positions and orientations are updated sequentially, starting from the base and propagating through each joint.
+
+--------------------------------------------------
+
+### Class: `PSOManager`
+This class manages the Particle Swarm Optimization (PSO) process for optimizing the robotic arm's trajectory. It initializes the PSO parameters and coordinates the optimization loop.
+
+#### Methods:
+- `Start()`
+    - Initializes the PSO process by setting up initial parameters and validating the target position. It creates an instance of the RA_PSO class and prepares it for optimization.
+
+- `Run()`
+    - Executes the main PSO loop, evaluating particles based on their fitness. It updates the positions and velocities of the particles according to the PSO algorithm. The method iterates through the particles, updating their velocities and positions based on personal and global bests.
+
+--------------------------------------------------
+
+### Class: `RA_PSO`
+This class implements the Particle Swarm Optimization (PSO) algorithm. It is responsible for evaluating the fitness of each particle and updating the global best solution.
+
+#### Methods:
+- `FitnessFunction()`
+    - Calculates the fitness of a given set of joint angles for the robotic arm. The fitness function incorporates several penalties, including position error, rotation error, overfitting, movement smoothness, and collision. It returns a fitness value that is used to evaluate and compare different particle solutions.
+
+--------------------------------------------------
+
+## Properties:
+- ### position
+    - The current set of joint angles representing the particle's position in the solution space.
+
+- ### velocity
+    - The change in the particle's position, which is updated during each iteration based on the particle's and swarm's best known positions.
+
+- ### p_best
+    - The best position (set of joint angles) the particle has achieved so far.
+
+- ### fitness
+    - The fitness value associated with the particle's current position.
+
+--------------------------------------------------
+
+## Additional Methods:
+
+- `CheckForCollisions()` (in FourLinkRobot)
+    - Interpolates between joint configurations to check for any collisions with obstacles. This method ensures that the robotic arm's path is free from collisions throughout its movement.
+
+- `RobotVisualization()` (in FourLinkRobot or a related class)
+    - Handles the visualization of the robot's joint angles in real-time. It interpolates between different joint angles to ensure smooth visual transitions during movement.
+
 
 ## Contributing
 
