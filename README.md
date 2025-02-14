@@ -106,6 +106,10 @@ This class implements the Particle Swarm Optimization (PSO) algorithm. It is res
 
 - `RobotVisualization()` (in FourLinkRobot or a related class)
     - Handles the visualization of the robot's joint angles in real-time. It interpolates between different joint angles to ensure smooth visual transitions during movement.
+    - 
+## Images
+![Screenshot (2)](https://github.com/user-attachments/assets/2681968a-f18a-4094-b022-2fe24ed3a7b3)
+![Screenshot (3)](https://github.com/user-attachments/assets/7d316068-9ad8-4fb2-a677-0ff6b2c05fc1)
 
 
 ## Contributing
