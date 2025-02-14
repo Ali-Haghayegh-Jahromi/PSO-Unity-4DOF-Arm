@@ -1,11 +1,11 @@
 
-# RL-PSO-Unity-4DOF-Arm
+# PSO-Unity-4DOF-Arm
 
-**RL-PSO-Unity-4DOF-Arm** is a simulation project that integrates Reinforcement Learning (RL) and Particle Swarm Optimization (PSO) for trajectory generation of a 4 Degrees of Freedom (4DOF) robotic arm in the Unity 2023 environment. This project demonstrates advanced AI-based motion planning and control techniques, including obstacle avoidance, minimum effort and time penalties, and precision penalties for efficient and accurate performance.
+**PSO-Unity-4DOF-Arm** is a simulation project that uses Particle Swarm Optimization (PSO) for trajectory generation of a 4 Degrees of Freedom (4DOF) robotic arm in the Unity environment. This project demonstrates advanced AI-based motion planning and control techniques, including obstacle avoidance, minimum effort and time penalties, and precision penalties for efficient and accurate performance.
 
 ## Features
 
-- **RL/PSO Approach**: Reinforcement Learning and Particle Swarm Optimization for effective trajectory generation.
+- **PSO Approach**: Particle Swarm Optimization for effective trajectory generation.
 - **4-DOF Robotic Arm**: Simulated robotic arm with four degrees of freedom, providing complex movement capabilities.
 - **Obstacle Avoidance**: Ensures the arm navigates around obstacles while reaching the target.
 - **Performance Penalties**: Includes minimum effort, time, and precision penalties to optimize trajectories.
@@ -15,13 +15,13 @@
 
 - Unity 2023 or later
 - Git
-- Basic understanding of Reinforcement Learning and Particle Swarm Optimization
+- Basic understanding of Particle Swarm Optimization, Unity, and robotics
 
 ## Installation
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/Al-Hagh-J/RL-PSO-Unity-4DOF-Arm.git
+   git clone https://github.com/Al-Hagh-J/PSO-Unity-4DOF-Arm.git
    ```
 2. **Open in Unity:**
    - Open Unity Hub.
@@ -35,7 +35,7 @@
    - Open the `MainScene` in the Unity Editor.
    - Press the `Play` button to start the simulation.
 2. **Modify Parameters:**
-   - Adjust the RL/PSO parameters in the `PSOManager` script to see how different settings impact the arm's performance.
+   - Adjust the PSO parameters in the `PSOManager` script to see how different settings impact the arm's performance.
 3. **View Results:**
    - Observe the robotic arm's trajectory and performance in the Unity scene.
 
@@ -110,7 +110,7 @@ This class implements the Particle Swarm Optimization (PSO) algorithm. It is res
 ## Images
 ![Screenshot (2)](https://github.com/user-attachments/assets/2681968a-f18a-4094-b022-2fe24ed3a7b3)
 ![Screenshot (3)](https://github.com/user-attachments/assets/7d316068-9ad8-4fb2-a677-0ff6b2c05fc1)
-
+An illustration of the Unity environment showcasing optimization and obstacle avoidance.
 
 ## Contributing
 
