@@ -23,4 +23,13 @@ double proportion_p_value(double p_sh, int n_sh, double p_x, int n_x);
 // p-value of H1: SH better than X for means; `higher_is_better` selects the direction.
 double mean_p_value(const Summary& sh, const Summary& x, bool higher_is_better);
 
+// 95 % (z = 1.96) Wilson score interval of a proportion p observed in n trials.
+void wilson_interval(double p, int n, double z, double* lo, double* hi);
+
+// Half-width of the normal-approximation confidence interval of a mean.
+double mean_ci_half_width(const Summary& s, double z);
+
+// Spearman rank correlation (ties get average ranks); NaN if undefined.
+double spearman(const std::vector<double>& a, const std::vector<double>& b);
+
 }  // namespace sh

@@ -13,7 +13,7 @@ struct Layers {
     bool bw = false, sw = false, et = false;
 };
 
-enum class Algo { PF_ET, F_ET, SH, O_ET, O_SW, O_BW, ET_SW, ET_BW, SW_BW };
+enum class Algo { PF_ET, F_ET, SH, O_ET, O_SW, O_BW, ET_SW, ET_BW, SW_BW, NONE };
 
 struct AlgoSpec {
     Algo algo;
@@ -23,7 +23,10 @@ struct AlgoSpec {
     bool perfect;    // PF-ET: sees occluded obstacles + exact future
 };
 
-const std::vector<AlgoSpec>& all_algorithms();  // in the paper's order 1..9
+const std::vector<AlgoSpec>& all_algorithms();  // the paper's nine, in its order 1..9
+// Not in the paper: NONE (no model of the future, NF1 only, Delta_e = 0.8 s)
+// completes the 2^3 design of the BW/SW/ET ablation.
+const std::vector<AlgoSpec>& extra_algorithms();
 const AlgoSpec& algo_spec(Algo a);
 bool parse_algo(const std::string& name, Algo* out);
 

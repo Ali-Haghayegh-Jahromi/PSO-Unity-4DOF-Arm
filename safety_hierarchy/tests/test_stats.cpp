@@ -1,4 +1,6 @@
 // The one-sided unpooled z-test reproduces the PCFR p-values of Tables II-IV.
+#include <cmath>
+
 #include "sh/stats.hpp"
 #include "test.hpp"
 
@@ -24,6 +26,23 @@ TEST(pcfr_p_values_match_paper_tables) {
     };
     for (const Case& c : cases)
         CHECK_NEAR(proportion_p_value(c.sh / double(n), n, c.other / double(n), n), c.paper, 6e-5);
+}
+
+TEST(wilson_interval_known_values) {
+    double lo, hi;
+    wilson_interval(0.5, 100, 1.96, &lo, &hi);
+    CHECK_NEAR(lo, 0.4038, 1e-4);
+    CHECK_NEAR(hi, 0.5962, 1e-4);
+    wilson_interval(0.0, 30, 1.96, &lo, &hi);  // never collapses to [0, 0]
+    CHECK_NEAR(lo, 0.0, 1e-12);
+    CHECK_NEAR(hi, 0.1135, 1e-4);
+}
+
+TEST(spearman_known_values) {
+    CHECK_NEAR(spearman({1, 2, 3}, {10, 20, 30}), 1.0, 1e-12);
+    CHECK_NEAR(spearman({1, 2, 3}, {3, 2, 1}), -1.0, 1e-12);
+    CHECK_NEAR(spearman({1, 2, 2, 3}, {1, 2, 3, 4}), 4.5 / std::sqrt(4.5 * 5.0), 1e-12);  // tie -> average rank
+    CHECK(std::isnan(spearman({1, 1, 1}, {1, 2, 3})));
 }
 
 TEST(mean_test_direction) {

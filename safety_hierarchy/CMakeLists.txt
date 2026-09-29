@@ -27,7 +27,7 @@ add_library(sh_core
 target_include_directories(sh_core PUBLIC include)
 target_compile_definitions(sh_core PUBLIC SH_MAPS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/maps")
 
-foreach(app sh_run sh_experiments sh_tables)
+foreach(app sh_run sh_experiments sh_tables sh_ablation)
   add_executable(${app} apps/${app}.cpp)
   target_link_libraries(${app} PRIVATE sh_core Threads::Threads)
 endforeach()

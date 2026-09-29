@@ -23,17 +23,27 @@ const std::vector<AlgoSpec>& all_algorithms() {
     return kAlgos;
 }
 
+const std::vector<AlgoSpec>& extra_algorithms() {
+    static const std::vector<AlgoSpec> kExtra = {
+        {Algo::NONE, "NONE", {false, false, false}, 0.8, false},
+    };
+    return kExtra;
+}
+
 const AlgoSpec& algo_spec(Algo a) {
-    for (const auto& s : all_algorithms())
-        if (s.algo == a) return s;
+    for (const auto* list : {&all_algorithms(), &extra_algorithms()})
+        for (const auto& s : *list)
+            if (s.algo == a) return s;
     throw std::logic_error("unknown algorithm");
 }
 
 bool parse_algo(const std::string& name, Algo* out) {
-    for (const auto& s : all_algorithms()) {
-        if (name == s.name) {
-            *out = s.algo;
-            return true;
+    for (const auto* list : {&all_algorithms(), &extra_algorithms()}) {
+        for (const auto& s : *list) {
+            if (name == s.name) {
+                *out = s.algo;
+                return true;
+            }
         }
     }
     return false;
