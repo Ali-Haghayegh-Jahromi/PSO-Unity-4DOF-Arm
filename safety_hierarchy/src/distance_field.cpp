@@ -1,9 +1,17 @@
 #include "sh/distance_field.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <limits>
 #include <queue>
 
 namespace sh {
+
+double dist_to_cell(const Vec2& center, double res, const Vec2& q) {
+    const double dx = std::max(std::fabs(q.x - center.x) - 0.5 * res, 0.0);
+    const double dy = std::max(std::fabs(q.y - center.y) - 0.5 * res, 0.0);
+    return std::hypot(dx, dy);
+}
 
 void propagate_distance(const GridSpec& spec, const std::vector<uint8_t>& blocked,
                         const std::vector<FieldSeed>& seeds, double max_dist, std::vector<float>* dist) {
@@ -17,7 +25,8 @@ void propagate_distance(const GridSpec& spec, const std::vector<uint8_t>& blocke
 
     auto dist_to = [&](int cell, int s) {
         const Vec2 c = spec.center(cell % spec.nx, cell / spec.nx);
-        return static_cast<float>(sh::dist(c, seeds[static_cast<size_t>(s)].src) - seeds[static_cast<size_t>(s)].offset);
+        const FieldSeed& seed = seeds[static_cast<size_t>(s)];
+        return static_cast<float>(dist_to_cell(c, spec.res, seed.src) - seed.offset);
     };
 
     for (int s = 0; s < static_cast<int>(seeds.size()); ++s) {

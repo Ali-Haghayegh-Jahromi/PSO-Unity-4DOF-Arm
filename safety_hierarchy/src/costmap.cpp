@@ -50,7 +50,7 @@ double DynamicCostmap::growth_radius(int k) const {
 }
 
 void DynamicCostmap::stamp_et(const std::vector<EtPrediction>& et) {
-    // ET inflated by the robot radius: centre cells within r_obs + r_robot.
+    // ET inflated by the robot radius: cells any part of which is within r_obs + r_robot.
     const double r = r_obs_ + r_robot_;
     const int n = static_cast<int>(std::ceil(r / win_.res)) + 1;
     for (const EtPrediction& e : et) {
@@ -61,7 +61,7 @@ void DynamicCostmap::stamp_et(const std::vector<EtPrediction>& et) {
             const Cell c = win_.cell_of(q);
             for (int j = c.j - n; j <= c.j + n; ++j) {
                 for (int i = c.i - n; i <= c.i + n; ++i) {
-                    if (!win_.inside(i, j) || dist(win_.center(i, j), q) > r) continue;
+                    if (!win_.inside(i, j) || dist_to_cell(win_.center(i, j), win_.res, q) > r) continue;
                     mem_[static_cast<size_t>(k) * w2_ + win_.index(i, j)] |= kInET;
                 }
             }
@@ -157,6 +157,7 @@ TrajectoryCost evaluate_trajectory(const DynamicCostmap& cm, const int* cells) {
         if (s == kNf1Obstacle || s == kNf1Unreached) {
             r.valid = false;
             ++r.static_cells;
+            r.wall_cells += cm.wall(w) ? 1 : 0;
         } else {
             r.sum_nf1 += s;
         }

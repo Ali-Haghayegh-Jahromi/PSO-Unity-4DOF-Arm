@@ -25,8 +25,15 @@ struct FieldSeed {
     double offset;  // subtracted from the distance (obstacle radius, 0 for FOV boundary)
 };
 
-// dist[c] = |centre(c) - src| - offset for the source that reaches c first;
-// +inf where unreached. Blocked cells are never entered (seed cells always are).
+// Distance from point q to the square cell of side `res` centred at `center`.
+double dist_to_cell(const Vec2& center, double res, const Vec2& q);
+
+// dist[c] = (distance from src to the nearest point of cell c) - offset, for
+// the source that reaches c first; +inf where unreached. Measuring to the cell
+// square (not its centre) makes a cell part of a grown set as soon as any part
+// of it is, the same conservative convention as the static inflation: every
+// robot centre inside a cell outside the set is really clear of the model.
+// Blocked cells are never entered (seed cells always are).
 // Expansion stops once the distance exceeds max_dist.
 void propagate_distance(const GridSpec& spec, const std::vector<uint8_t>& blocked,
                         const std::vector<FieldSeed>& seeds, double max_dist, std::vector<float>* dist);

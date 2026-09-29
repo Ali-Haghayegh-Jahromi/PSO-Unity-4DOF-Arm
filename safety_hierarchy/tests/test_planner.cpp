@@ -44,6 +44,34 @@ TEST(library_samples_follow_the_controls) {
     CHECK_NEAR(u1.w, 0.0, 1e-12);
 }
 
+// Regression: robot inside the inflated zone of a thin known wall it faces.
+// Crossing the wall leaves the inflated zone fastest, but must never be chosen.
+TEST(static_fallback_never_crosses_a_known_wall) {
+    Params p = params_for_set(1);
+    MapDef m;
+    m.xmin = -15, m.ymin = -15, m.xmax = 15, m.ymax = 15;
+    m.rects.push_back({0.3, -3.0, 0.6, 3.0});  // thin wall 0.3 m ahead
+    const Grid<uint8_t> occ = rasterize(m, p.cell);
+    const Nf1 nf1 = compute_nf1(inflate(occ, p.r_robot), occ.spec.cell_of(Vec2{10.0, 0.0}));
+    Grid<uint8_t> visible(occ.spec, 1);
+    std::vector<SensedObstacle> sensed;
+    std::vector<EtPrediction> et;
+    CostmapInput in;
+    in.center = occ.spec.cell_of(Vec2{0.0, 0.0});
+    in.scm = &nf1;
+    in.known_static = &occ;
+    in.visible = &visible;
+    in.sensed = &sensed;
+    in.et = &et;
+    in.layers = {true, true, true};
+    DynamicCostmap cm(p);
+    cm.build(in);
+    const TrajectoryLibrary lib(p);
+    const PlanResult r = plan(lib, cm, {0.0, 0.0, 0.0});
+    CHECK(r.static_fallback);
+    CHECK(r.cost.wall_cells == 0);
+}
+
 TEST(plan_heads_to_goal_in_free_space_and_avoids_walls) {
     Params p = params_for_set(1);
     MapDef m;

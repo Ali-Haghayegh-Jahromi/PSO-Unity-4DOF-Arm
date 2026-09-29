@@ -35,6 +35,7 @@ TEST(nf1_keeps_large_value_where_unreachable) {
     CHECK(nf.max_value == 3 + 8);  // farthest reachable cell (4, 9)
 }
 
+// In open space the field is the exact Euclidean distance to the cell square.
 TEST(distance_field_is_euclidean_in_open_space) {
     const GridSpec g{0.0, 0.0, 0.1, 100, 100};
     const std::vector<uint8_t> blocked(static_cast<size_t>(g.size()), 0);
@@ -44,7 +45,8 @@ TEST(distance_field_is_euclidean_in_open_space) {
     double worst = 0.0;
     for (int j = 0; j < g.ny; ++j)
         for (int i = 0; i < g.nx; ++i)
-            worst = std::max(worst, std::fabs(d[static_cast<size_t>(g.index(i, j))] - (dist(g.center(i, j), src) - 0.25)));
+            worst = std::max(worst, std::fabs(d[static_cast<size_t>(g.index(i, j))] -
+                                              (dist_to_cell(g.center(i, j), g.res, src) - 0.25)));
     CHECK(worst < 1e-4);
 }
 

@@ -4,6 +4,7 @@
 #include <random>
 
 #include "sh/costmap.hpp"
+#include "sh/distance_field.hpp"
 #include "sh/map.hpp"
 #include "sh/nf1.hpp"
 #include "test.hpp"
@@ -196,19 +197,53 @@ TEST(algorithm1_invariants_on_built_costmap) {
     CHECK(monotone_bad == 0);
 }
 
+// SW at slice k = cells any part of which is within r_obs + r_robot + v_omax k dt
+// of the obstacle centre (open space, so the geodesic distance is Euclidean).
 TEST(sw_grows_at_v_omax_from_robot_radius) {
     Fixture f;
-    f.sensed.push_back({0, {0.0, 3.0}, {0.0, 0.0}});
+    const Vec2 q{0.03, 3.02};
+    f.sensed.push_back({0, q, {0.0, 0.0}});
     DynamicCostmap cm(f.p);
     cm.build(f.input({false, true, false}));
+    const GridSpec& win = cm.window();
+    int mismatches = 0, inside = 0;
     for (int k : {0, 10, 30}) {
-        const double reach = f.p.r_obs + f.p.r_robot + f.p.v_omax * k * f.p.dt;  // from the obstacle centre
-        int w;
-        CHECK(cm.window_index(0.05, 3.05 - reach + 0.06, &w));
-        CHECK((cm.members(k, w) & kInSW) != 0);
-        CHECK(cm.window_index(0.05, 3.05 - reach - 0.06, &w));
-        CHECK((cm.members(k, w) & kInSW) == 0);
+        const double reach = f.p.r_obs + f.p.r_robot + f.p.v_omax * k * f.p.dt;
+        for (int j = 0; j < win.ny; ++j) {
+            for (int i = 0; i < win.nx; ++i) {
+                const double d = dist_to_cell(win.center(i, j), win.res, q);
+                if (std::fabs(d - reach) < 1e-4) continue;  // float boundary
+                const bool in = (cm.members(k, win.index(i, j)) & kInSW) != 0;
+                mismatches += in != (d <= reach);
+                inside += in;
+            }
+        }
     }
+    CHECK(inside > 0);
+    CHECK(mismatches == 0);
+}
+
+// ET cells: any part within r_obs + r_robot of the predicted centre, so a
+// robot centre in a cell outside ET is really clear of the obstacle.
+TEST(et_cells_are_conservative) {
+    Fixture f;
+    const Vec2 q{1.234, -0.567};
+    f.sensed.push_back({0, q, {0.0, 0.0}});
+    f.et.push_back({0, std::vector<Vec2>(static_cast<size_t>(f.p.m + 1), q)});
+    DynamicCostmap cm(f.p);
+    cm.build(f.input({false, false, true}));
+    const GridSpec& win = cm.window();
+    const double r = f.p.r_obs + f.p.r_robot;
+    int unsafe = 0;
+    for (int j = 0; j < win.ny; ++j)
+        for (int i = 0; i < win.nx; ++i)
+            if (!(cm.members(5, win.index(i, j)) & kInET))
+                for (double a : {-0.5, 0.5})
+                    for (double b : {-0.5, 0.5}) {  // cell corners: closest possible robot centres
+                        const Vec2 corner = win.center(i, j) + Vec2{a * win.res, b * win.res};
+                        unsafe += dist(corner, q) < r - 1e-9;
+                    }
+    CHECK(unsafe == 0);
 }
 
 TEST(growth_is_blocked_by_known_static) {

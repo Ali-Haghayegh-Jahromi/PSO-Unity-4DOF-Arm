@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <tuple>
 
 namespace sh {
 
@@ -75,10 +76,12 @@ PlanResult plan(const TrajectoryLibrary& lib, const DynamicCostmap& cm, const Po
             const ShKey key = sh_key(c);
             if (best_key < 0 || key < key_best) best_key = tr, key_best = key;
         }
-        // Fallback order if nothing is valid: least static contact, then Eq. (4).
-        if (best_any < 0 || c.static_cells < c_any.static_cells ||
-            (c.static_cells == c_any.static_cells && c.cost < c_any.cost))
-            best_any = tr, c_any = c;
+        // Fallback if nothing is valid (the robot is inside a freshly inflated
+        // zone): never through a known wall, then least inflated contact, then Eq. (4).
+        const auto fallback_key = [](const TrajectoryCost& x) {
+            return std::make_tuple(x.wall_cells, x.static_cells, x.cost);
+        };
+        if (best_any < 0 || fallback_key(c) < fallback_key(c_any)) best_any = tr, c_any = c;
     }
 
     if (best_valid >= 0) {
