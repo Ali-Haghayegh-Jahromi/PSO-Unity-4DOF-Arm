@@ -71,6 +71,12 @@ struct SimHooks {
     int trace_every = 10;
 };
 
+// One simulation step of the robot under control u. The robot stalls (does not
+// move) if the new pose would overlap an occupied cell of `occ`; returns false
+// then. Used with the true map for execution and with the robot's known map to
+// predict where the next trajectory starts.
+bool step_robot(const Grid<uint8_t>& occ, double r_robot, const Control& u, double dt, Pose* pose);
+
 RunResult simulate(const Scenario& sc, const MapDef& map, const Grid<uint8_t>& occ, const Params& p, Algo algo,
                    const SimHooks* hooks = nullptr);
 

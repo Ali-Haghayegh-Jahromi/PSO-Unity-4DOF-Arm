@@ -44,6 +44,17 @@ bool DynamicCostmap::window_index(double x, double y, int* w) const {
     return true;
 }
 
+bool DynamicCostmap::disk_hits_known(const Vec2& c, double r) const {
+    const Cell lo = win_.cell_of(c.x - r, c.y - r), hi = win_.cell_of(c.x + r, c.y + r);
+    for (int j = lo.j; j <= hi.j; ++j) {
+        for (int i = lo.i; i <= hi.i; ++i) {
+            if (win_.inside(i, j) && !blocked_[static_cast<size_t>(win_.index(i, j))]) continue;
+            if (dist_to_cell(win_.center(i, j), win_.res, c) < r) return true;
+        }
+    }
+    return false;
+}
+
 double DynamicCostmap::growth_radius(int k) const {
     // Robot-radius inflation at the first slice, then growth at v_omax (Sec. III-C).
     return r_robot_ + v_omax_ * (growth_offset_ + k * dt_);
@@ -157,7 +168,6 @@ TrajectoryCost evaluate_trajectory(const DynamicCostmap& cm, const int* cells) {
         if (s == kNf1Obstacle || s == kNf1Unreached) {
             r.valid = false;
             ++r.static_cells;
-            r.wall_cells += cm.wall(w) ? 1 : 0;
         } else {
             r.sum_nf1 += s;
         }

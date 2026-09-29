@@ -61,7 +61,9 @@ public:
     int64_t dcm(int k, int w) const { return dcm_[static_cast<size_t>(k) * w2_ + w]; }
     uint8_t members(int k, int w) const { return mem_[static_cast<size_t>(k) * w2_ + w]; }
     int32_t scm(int w) const { return scm_[static_cast<size_t>(w)]; }
-    bool wall(int w) const { return blocked_[static_cast<size_t>(w)] != 0; }  // known static (not inflated)
+    double robot_radius() const { return r_robot_; }
+    // Does a robot disk at c overlap a known static cell (outside the window = static)?
+    bool disk_hits_known(const Vec2& c, double r) const;
     // Radius (from the seeds) of BW/SW at slice k.
     double growth_radius(int k) const;
 
@@ -88,7 +90,6 @@ private:
 struct TrajectoryCost {
     bool valid = true;     // touches no (inflated) known static cell [A17]
     int static_cells = 0;  // samples in inflated known static cells
-    int wall_cells = 0;    // samples inside known static cells themselves
     bool in_F = true;      // touches none of the enabled models
     int p_bw = 0, p_sw = 0, p_et = 0;  // number of (x,y,t) cells in each model
     int64_t sum_nf1 = 0;   // sum of SCM over k = 1..m

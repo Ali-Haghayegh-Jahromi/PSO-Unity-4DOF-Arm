@@ -44,6 +44,13 @@ Scenario make_scenario(const Grid<uint8_t>& occ, const Params& p, int set, int m
     }
 }
 
+bool step_robot(const Grid<uint8_t>& occ, double r_robot, const Control& u, double dt, Pose* pose) {
+    const Pose next = integrate_unicycle(*pose, u.v, u.w, dt);
+    if (disk_hits(occ, next.pos(), r_robot)) return false;
+    *pose = next;
+    return true;
+}
+
 namespace {
 
 // Sec. VII-A: robot stayed inside a circle of radius R for N planning cycles.
@@ -143,12 +150,11 @@ RunResult simulate(const Scenario& sc, const MapDef& map, const Grid<uint8_t>& o
                 }
             }
 
-            // Pose at which the next trajectory starts (end of this cycle's execution).
+            // Pose at which the next trajectory starts (end of this cycle's
+            // execution), including stalls against walls the robot knows about.
             Pose start = pose;
-            for (int s = step; s < step + steps_per_cycle; ++s) {
-                const Control u = control_at(active, active_t0, s);
-                start = integrate_unicycle(start, u.v, u.w, p.sim_dt);
-            }
+            for (int s = step; s < step + steps_per_cycle; ++s)
+                step_robot(smap.known(), p.r_robot, control_at(active, active_t0, s), p.sim_dt, &start);
             const double t_start = t + A.delta_e;
             const std::vector<EtPrediction> et = A.perfect ? estimate_exact(scan, world, t_start, p.dt, p.m)
                                                            : estimate_linear(scan, t_start, p.dt, p.m);
@@ -179,15 +185,13 @@ RunResult simulate(const Scenario& sc, const MapDef& map, const Grid<uint8_t>& o
         }
 
         // ---- execute the active trajectory for one simulation step ----
-        const Control u = control_at(active, active_t0, step);
-        const Pose next = integrate_unicycle(pose, u.v, u.w, p.sim_dt);
-        if (disk_hits(occ, next.pos(), p.r_robot)) {
+        const Pose before = pose;
+        if (step_robot(occ, p.r_robot, control_at(active, active_t0, step), p.sim_dt, &pose)) {
+            static_contact = false;
+            res.path_length += dist(before.pos(), pose.pos());
+        } else {
             if (!static_contact) ++res.static_collisions;  // stall against the wall
             static_contact = true;
-        } else {
-            static_contact = false;
-            res.path_length += dist(pose.pos(), next.pos());
-            pose = next;
         }
     }
     res.plan_ms_mean = res.cycles ? plan_ms_sum / res.cycles : 0.0;

@@ -57,8 +57,8 @@ PlanResult plan(const TrajectoryLibrary& lib, const DynamicCostmap& cm, const Po
     if (all) all->assign(static_cast<size_t>(lib.size()), TrajectoryCost{});
 
     PlanResult res;
-    int best_valid = -1, best_any = -1, best_key = -1;
-    TrajectoryCost c_valid, c_any;
+    int best_valid = -1, best_key = -1;
+    TrajectoryCost c_valid;
     ShKey key_best{};
     for (int tr = 0; tr < lib.size(); ++tr) {
         for (int k = 1; k <= m; ++k) {
@@ -76,12 +76,6 @@ PlanResult plan(const TrajectoryLibrary& lib, const DynamicCostmap& cm, const Po
             const ShKey key = sh_key(c);
             if (best_key < 0 || key < key_best) best_key = tr, key_best = key;
         }
-        // Fallback if nothing is valid (the robot is inside a freshly inflated
-        // zone): never through a known wall, then least inflated contact, then Eq. (4).
-        const auto fallback_key = [](const TrajectoryCost& x) {
-            return std::make_tuple(x.wall_cells, x.static_cells, x.cost);
-        };
-        if (best_any < 0 || fallback_key(c) < fallback_key(c_any)) best_any = tr, c_any = c;
     }
 
     if (best_valid >= 0) {
@@ -90,8 +84,23 @@ PlanResult plan(const TrajectoryLibrary& lib, const DynamicCostmap& cm, const Po
         // Consistent if the Eq. (4) winner is as good as the hierarchy's best (ties allowed).
         res.sh_consistent = !(key_best < sh_key(c_valid));
     } else {
-        res.traj = best_any;
-        res.cost = c_any;
+        // Fallback (the robot is inside a freshly inflated zone, e.g. next to a
+        // wall it just discovered): first the fewest samples at which the robot
+        // disk would penetrate a known wall (physically impossible motion), then
+        // the fewest inflated samples, then Eq. (4).
+        const double r = cm.robot_radius() - 1e-6;
+        std::tuple<int, int, int64_t> best{};
+        for (int tr = 0; tr < lib.size(); ++tr) {
+            int pen = 0;
+            for (int k = 1; k <= m; ++k) {
+                const Pose q = lib.sample(tr, k, start);
+                pen += cm.disk_hits_known(q.pos(), r) ? 1 : 0;
+                cm.window_index(q.x, q.y, &cells[static_cast<size_t>(k - 1)]);
+            }
+            const TrajectoryCost c = evaluate_trajectory(cm, cells.data());
+            const auto key = std::make_tuple(pen, c.static_cells, c.cost);
+            if (res.traj < 0 || key < best) res.traj = tr, res.cost = c, best = key;
+        }
         res.static_fallback = true;
     }
     return res;

@@ -3,6 +3,7 @@
 
 #include "sh/map.hpp"
 #include "sh/planner.hpp"
+#include "sh/simulator.hpp"
 #include "test.hpp"
 
 using namespace sh;
@@ -69,7 +70,56 @@ TEST(static_fallback_never_crosses_a_known_wall) {
     const TrajectoryLibrary lib(p);
     const PlanResult r = plan(lib, cm, {0.0, 0.0, 0.0});
     CHECK(r.static_fallback);
-    CHECK(r.cost.wall_cells == 0);
+    for (int k = 1; k <= p.m; ++k) CHECK(!disk_hits(occ, lib.sample(r.traj, k, {0.0, 0.0, 0.0}).pos(), p.r_robot - 1e-6));
+}
+
+// Regression: robot touching a wall it drives along (the stuck case of set 2,
+// map 2, run 1). The fallback must not pick a motion whose disk enters the wall,
+// which would stall the robot forever.
+TEST(static_fallback_never_pushes_into_a_touched_wall) {
+    Params p = params_for_set(1);
+    MapDef m;
+    m.xmin = -15, m.ymin = -15, m.xmax = 15, m.ymax = 15;
+    m.rects.push_back({-3.0, -1.0, 3.0, -0.3});  // wall cells up to y = -0.3; robot touching it
+    const Grid<uint8_t> occ = rasterize(m, p.cell);
+    const Nf1 nf1 = compute_nf1(inflate(occ, p.r_robot), occ.spec.cell_of(Vec2{-6.0, -3.0}));
+    Grid<uint8_t> visible(occ.spec, 1);
+    std::vector<SensedObstacle> sensed;
+    std::vector<EtPrediction> et;
+    CostmapInput in;
+    in.center = occ.spec.cell_of(Vec2{0.0, 0.0});
+    in.scm = &nf1;
+    in.known_static = &occ;
+    in.visible = &visible;
+    in.sensed = &sensed;
+    in.et = &et;
+    in.layers = {false, true, true};
+    DynamicCostmap cm(p);
+    cm.build(in);
+    const TrajectoryLibrary lib(p);
+    const Pose start{0.0, -0.045, -2.86};  // 5 mm clearance, heading left and slightly into the wall
+    CHECK(!disk_hits(occ, start.pos(), p.r_robot));
+    const PlanResult r = plan(lib, cm, start);
+    CHECK(r.static_fallback);
+    Pose q = start;  // the executed first cycle must actually move or turn the robot
+    int moved = 0;
+    for (int s = 0; s < 80; ++s) moved += step_robot(occ, p.r_robot, lib.control_at(r.traj, s * 0.01), 0.01, &q);
+    CHECK(moved == 80);
+}
+
+// A robot pushing against a known wall stays put: the predicted start pose of
+// the next trajectory must not pass through the wall (regression).
+TEST(robot_step_stalls_at_walls) {
+    MapDef m;
+    m.xmin = -5, m.ymin = -5, m.xmax = 5, m.ymax = 5;
+    m.rects.push_back({1.0, -2.0, 1.2, 2.0});
+    const Grid<uint8_t> occ = rasterize(m, 0.1);
+    Pose q{0.5, 0.0, 0.0};
+    int stalls = 0;
+    for (int s = 0; s < 200; ++s) stalls += step_robot(occ, 0.25, {1.0, 0.0}, 0.01, &q) ? 0 : 1;
+    CHECK(stalls > 0);
+    CHECK(q.x < 1.0 - 0.25 + 1e-9);
+    CHECK(step_robot(occ, 0.25, {0.0, 0.8}, 0.01, &q));  // turning in place is still possible
 }
 
 TEST(plan_heads_to_goal_in_free_space_and_avoids_walls) {
