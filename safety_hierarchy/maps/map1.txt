@@ -1,0 +1,9 @@
+# Map 1: empty space with no obstacles (Fig. 7).
+# World extent measured from the figure grid (14.66 px/m).
+world -15 -7.5 15 7.5
+# Periodic obstacles (set 2 only) [A11]: this map has nothing to hide behind,
+# so they are plain vertical shuttles across the room.
+periodic -6 -6.8 -6 6.8
+periodic -2 6.8 -2 -6.8
+periodic 2 -6.8 2 6.8
+periodic 6 6.8 6 -6.8

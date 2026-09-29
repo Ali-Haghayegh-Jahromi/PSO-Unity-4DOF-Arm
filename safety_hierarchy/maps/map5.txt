@@ -1,0 +1,24 @@
+# Map 5: hallway situation (Fig. 11). A hallway y in [-1.5, 1.45] with side
+# rooms above and below.
+world -15 -7.5 15 7.5
+# upper side
+rect -11.70  1.45 -4.90  2.00    # T, horizontal
+rect  -9.30  2.00 -8.85  7.50    # T, vertical
+rect  -2.40  1.45 -1.90  7.50    # L, vertical
+rect  -1.90  1.45  2.40  2.00    # L, horizontal
+rect   5.10  2.00  5.65  7.50    # L, vertical
+rect   5.10  1.45 11.15  2.00    # L, horizontal
+# lower side
+rect -15.00 -2.05 -10.35 -1.50
+rect  -7.25 -2.05  -3.85 -1.50   # corner, horizontal
+rect  -7.80 -7.50  -7.25 -1.50   # corner, vertical
+rect  -0.85 -2.05   1.40 -1.50   # corner, horizontal
+rect  -1.35 -7.50  -0.85 -1.50   # corner, vertical
+rect   4.05 -2.05  12.20 -1.50   # T, horizontal
+rect   6.45 -7.50   6.90 -2.05   # T, vertical
+# Periodic obstacles (set 2 only) [A11]: people walking between the side
+# rooms and the hallway through the doorways.
+periodic -3.3  6.8 -3.3 -6.8
+periodic  3.4 -6.8  3.4  6.8
+periodic -9.0 -6.8 -9.0  0.9
+periodic 13.5  6.8 13.5 -6.8

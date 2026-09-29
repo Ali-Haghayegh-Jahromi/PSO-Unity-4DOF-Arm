@@ -1,0 +1,28 @@
+# Map 2: cluttered with obstacles (Fig. 8). Rectangles digitized from the
+# figure (tools/digitize_maps.py), rounded to 0.05 m.
+world -15 -7.5 15 7.5
+rect -0.70  5.80  0.80  7.50
+rect -7.45  5.05 -5.95  6.60
+rect -12.60 3.70 -10.90 5.40
+rect  8.85  4.75 12.65  5.10     # L-shape, horizontal part
+rect 12.30  1.65 12.65  4.75     # L-shape, vertical part
+rect  4.35  4.15  5.00  4.75
+rect -4.45  2.05 -2.95  3.60
+rect  0.30  1.75  0.90  2.40
+rect -10.45 1.55 -9.85  2.25
+rect  8.40  0.60 10.15  2.25
+rect  3.45 -0.35  5.15  1.50
+rect -14.10 -0.70 -12.25 1.25
+rect -7.80 -0.70 -6.10  1.00
+rect -3.60 -2.10 -1.90 -0.40
+rect 10.05 -3.95 12.05 -2.10
+rect -11.20 -4.35 -9.25 -2.50
+rect  5.10 -5.00  6.80 -3.25
+rect  0.05 -5.10  1.90 -3.40
+rect -6.70 -6.60 -4.90 -4.75
+# Periodic obstacles (set 2 only) [A11]: vertical shuttles running close to
+# blocks, so they come out from behind them.
+periodic  2.35 -6.8  2.35  3.2
+periodic -8.30  6.8 -8.30 -6.8
+periodic  7.30 -6.8  7.30  6.8
+periodic -4.30 -6.8 -4.30  1.6

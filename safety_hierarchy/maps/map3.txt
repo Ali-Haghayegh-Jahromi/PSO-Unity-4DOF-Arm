@@ -1,0 +1,13 @@
+# Map 3: u-shaped obstacles (Fig. 9). Two L-shaped walls that form u-shaped
+# traps with the outer walls.
+world -15 -7.5 15 7.5
+rect -8.70  1.55  2.10  2.25     # upper-left L, horizontal
+rect -8.70 -7.50 -8.00  1.55     # upper-left L, vertical (to the bottom wall)
+rect -2.35 -2.65  8.40 -2.00     # lower-right L, horizontal
+rect  7.80 -2.00  8.40  7.50     # lower-right L, vertical (to the top wall)
+# Periodic obstacles (set 2 only) [A11]: inside the two traps and behind the
+# two vertical walls.
+periodic  -5.0 -6.8  -5.0  1.0
+periodic   5.0  6.8   5.0 -1.4
+periodic  11.5 -6.8  11.5  6.8
+periodic -11.5  6.8 -11.5 -6.8
