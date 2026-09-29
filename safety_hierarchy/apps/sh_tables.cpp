@@ -198,6 +198,31 @@ int main(int argc, char** argv) {
         }
         std::printf("  SH significantly better (p<0.05) than %d of %d variants on at least one measure\n",
                     better_somewhere, variants);
+
+        // ---- per-map breakdown (not in the paper): mean time to goal / ANCR ----
+        std::printf("\nPer map, mean time to goal (s) / ANCR:\n\n| map |");
+        for (const auto& a : algos) std::printf(" %s |", a.name);
+        std::printf("\n|---|");
+        for (size_t k = 0; k < algos.size(); ++k) std::printf("---|");
+        std::printf("\n");
+        for (int m = 1; m <= 5; ++m) {
+            std::printf("| %d |", m);
+            for (const auto& a : algos) {
+                double t = 0.0, n_coll = 0.0;
+                int n = 0, n_reached = 0;
+                for (const Row& r : rows) {
+                    if (r.set != set || r.map != m || r.algo != a.name) continue;
+                    ++n;
+                    n_coll += r.dyn + r.stat;
+                    if (r.reached) t += r.time, ++n_reached;
+                }
+                if (n == 0)
+                    std::printf(" - |");
+                else
+                    std::printf(" %s / %.1f |", n_reached ? fmt(t / n_reached, "%.0f").c_str() : "-", n_coll / n);
+            }
+            std::printf("\n");
+        }
     }
     return 0;
 }
