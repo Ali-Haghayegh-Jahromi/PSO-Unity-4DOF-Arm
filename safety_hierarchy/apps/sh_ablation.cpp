@@ -150,14 +150,16 @@ double metric(Table& t, int set, const std::string& c, int which, bool paper) {
     if (paper) {
         const PaperCol* p = paper_value(set, c);
         if (!p) return NAN;
-        const double v[4] = {p->pcfr, p->ancr, p->amd, p->time};
+        const double v[5] = {p->pcfr, p->ancr, p->amd, p->time, 60.0 * p->ancr / p->time};
         return v[which];
     }
-    const double v[4] = {t[c].pcfr(), t[c].ancr(), t[c].amdm(), t[c].time()};
+    const double v[5] = {t[c].pcfr(), t[c].ancr(), t[c].amdm(), t[c].time(), 60.0 * t[c].total_coll / t[c].total_time};
     return v[which];
 }
 
-const char* kMetricName[4] = {"PCFR (pp)", "ANCR", "AMD (m)", "Time (s)"};
+// Collisions per minute: ours = total collisions / total time; paper = 60 ANCR / time.
+constexpr int kNumMetrics = 5;
+const char* kMetricName[kNumMetrics] = {"PCFR (pp)", "ANCR", "AMD (m)", "Time (s)", "Collisions / min"};
 
 // One summary row per (set, combination, metric) for tools/plot_ablation.py.
 void write_summary(const std::string& path, std::map<int, Table>& all, std::map<int, Table>& design) {
@@ -191,7 +193,7 @@ void write_summary(const std::string& path, std::map<int, Table>& all, std::map<
     }
     std::fclose(f);
 }
-const char* kMetricFmt[4] = {"%+.1f", "%+.2f", "%+.3f", "%+.0f"};
+const char* kMetricFmt[kNumMetrics] = {"%+.1f", "%+.2f", "%+.3f", "%+.0f", "%+.2f"};
 
 }  // namespace
 
@@ -227,7 +229,7 @@ int main(int argc, char** argv) {
     std::printf("\n## Rank agreement with the paper\n\nSpearman correlation, across the 7 paper combinations, between our "
                 "values (all runs) and the paper's. +1 = same ordering.\n\n| Metric | Set 1 | Set 2 | Set 3 |\n"
                 "|---|---|---|---|\n");
-    for (int w = 0; w < 4; ++w) {
+    for (int w = 0; w < kNumMetrics; ++w) {
         std::printf("| %s |", kMetricName[w]);
         for (auto& [set, t] : all) {
             std::vector<double> ours, paper;
@@ -251,7 +253,7 @@ int main(int argc, char** argv) {
                 "combination. Cells: **ours, the 3 pairs that exist in the paper** · ours, all 4 pairs (incl. NONE) · "
                 "*paper, same 3 pairs*.\n\n| Model | Metric | Set 1 | Set 2 | Set 3 |\n|---|---|---|---|---|\n");
     for (const Factor& f : factors) {
-        for (int w = 0; w < 4; ++w) {
+        for (int w = 0; w < kNumMetrics; ++w) {
             std::printf("| %s | %s |", f.name, kMetricName[w]);
             for (auto& [set, t] : all) {
                 double o3 = 0, o4 = 0, p3 = 0;
@@ -306,6 +308,8 @@ int main(int argc, char** argv) {
                     best(d, 1, false, false).c_str(), best(t, 1, false, true).c_str());
         std::printf("| Highest AMD of the 7 | %d | %s | %s | %s |\n", set, best(t, 2, true, false).c_str(),
                     best(d, 2, true, false).c_str(), best(t, 2, true, true).c_str());
+        std::printf("| Lowest collisions per minute of the 7 (paper: 60 ANCR / time) | %d | %s | %s | %s |\n", set,
+                    best(t, 4, false, false).c_str(), best(d, 4, false, false).c_str(), best(t, 4, false, true).c_str());
         const PVals es = p_values(t["SH"], t["ET+SW"]), ed = p_values(d["SH"], d["ET+SW"]);
         const PaperCol* pe = paper_value(set, "ET+SW");
         std::printf("| ET+SW close to SH (min p over the 3 measures) | %d | %s | %s | %s |\n", set,
