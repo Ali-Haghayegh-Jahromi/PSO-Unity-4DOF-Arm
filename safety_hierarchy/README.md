@@ -27,6 +27,12 @@ cmake --build build -j
 Requires only a C++17 compiler and CMake >= 3.16. The optional Python tools
 need matplotlib (plotting) or PyMuPDF/Pillow/SciPy (map digitizing).
 
+On Windows (Visual Studio 2019+ with the "Desktop development with C++"
+workload, which includes CMake), run the same commands from a
+"Developer PowerShell"; Visual Studio builds are multi-configuration, so
+build with `cmake --build build --config Release` and the programs land in
+`build\Release\` (e.g. `build\Release\sh_tests.exe`).
+
 ## Run
 
 ```bash

@@ -6,7 +6,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
-add_compile_options(-Wall -Wextra -Wpedantic)
+if(MSVC)
+  # Sources are UTF-8 (sh_ablation prints ·, ±, –); fopen is standard C, not a security issue here.
+  add_compile_options(/W4 /utf-8 /permissive-)
+  add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+else()
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
 find_package(Threads REQUIRED)
 
