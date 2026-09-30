@@ -27,6 +27,12 @@ cmake --build build -j
 Requires only a C++17 compiler and CMake >= 3.16. The optional Python tools
 need matplotlib (plotting) or PyMuPDF/Pillow/SciPy (map digitizing).
 
+On Windows (Visual Studio 2019+ with the "Desktop development with C++"
+workload, which includes CMake), run the same commands from a
+"Developer PowerShell"; Visual Studio builds are multi-configuration, so
+build with `cmake --build build --config Release` and the programs land in
+`build\Release\` (e.g. `build\Release\sh_tests.exe`).
+
 ## Run
 
 ```bash
@@ -150,6 +156,77 @@ on 4 cores).
   104 s; 170 s vs 182 s), but SH still collides 4-7x more than in the
   paper (`results/tables_h1_endpoints.md`). So the static-shadow part of
   BW explains part of the time gap, and none of the safety gap.
+
+### Ablation: BW, SW, ET and their combinations
+
+All 7 combinations of the three models (the paper's six variants and SH),
+plus **NONE** (no model, NF1 only; not in the paper) to complete the 2^3
+design. 3 sets x 5 maps x **20 runs** = 100 runs per combination and set
+(2400 runs), Delta_e = 0.8 s, deadlock fix active whenever BW is. The first 6
+runs per map are the paper's design (n = 30); they reproduce the 810-run
+experiment exactly (630 of 630 runs identical). 0 hierarchy violations.
+
+```bash
+./build/sh_experiments --runs 20 --algos NONE,O-ET,O-SW,O-BW,ET+SW,ET+BW,SW+BW,SH --out results/ablation.csv
+./build/sh_ablation results/ablation.csv --summary results/ablation_summary.csv > results/ablation_tables.md
+python3 tools/plot_ablation.py results/ablation_summary.csv results/ablation.png
+```
+
+`results/ablation_tables.md` has every number: PCFR, ANCR, AMD and time
+(ours with 95 % CIs, ours for the paper's design, paper), goal-reached
+rate, collisions per minute, deadlock fixes, planning time, the paper's
+p-values, rank agreement, main effects and the paper's claims.
+
+![Ablation: ours vs paper](results/ablation.png)
+
+**Main effect of adding one model** (mean change over the 3 combination
+pairs that exist in the paper; ours / paper):
+
+| model added | collisions per minute | time to goal (s) | collisions per run | PCFR (pp) |
+|---|---|---|---|---|
+| BW, set 1/2/3 | -0.83 / -0.28, -0.39 / -0.38, -0.42 / -0.38 | +99 / +11, +110 / +23, +83 / +15 | +1.4 / -0.3, +2.9 / -0.3, +1.7 / -0.7 | -5 / +12, -6 / +2, -1 / +7 |
+| SW, set 1/2/3 | -1.10 / -0.65, -0.61 / -0.66, -0.36 / -0.71 | +126 / +7, +110 / +5, +98 / +32 | +1.4 / -1.1, +2.3 / -1.1, +2.4 / -1.7 | +3 / +22, 0 / +23, -2 / +12 |
+| ET, set 1/2/3 | -0.35 / -0.78, -1.65 / -0.29, +0.03 / -0.59 | -2 / -25, 0 / -11, +3 / -53 | -1.4 / -1.9, -5.5 / -0.7, +0.2 / -3.1 | +6 / +11, +16 / +20, 0 / +9 |
+
+(Paper collisions per minute = 60 x ANCR / time, derived from Tables II-IV.)
+
+What the ablation shows:
+
+1. **Per minute of exposure, the models work as in the paper.** Each of BW,
+   SW and ET lowers the collision rate. For BW and SW the size of the
+   reduction is close to the paper's (e.g. adding BW: -0.39 vs -0.38 /min
+   in set 2, -0.42 vs -0.38 in set 3). Our ordering of the 7 combinations
+   by collisions per minute agrees with the paper's (Spearman +0.86,
+   +0.71, +0.36 in sets 1-3), and **SH has the lowest collision rate of
+   the 7 in sets 1 and 2, as in the paper**.
+2. **The time cost does not reproduce.** Adding SW or BW costs +83 to
+   +126 s in our simulation, against +5 to +32 s in the paper. BW
+   combinations trigger the deadlock fix 6-21 times per run, and all but
+   2 of the 45 runs that hit the 600 s limit are SW+BW or SH.
+3. **Hence the per-run measures diverge.** Obstacles never avoid the
+   robot, so collisions per run = rate x exposure. The lower rate does
+   not compensate the 2-3x longer runs. Adding SW or BW *raises* collisions
+   per run (+1.4 to +2.9) and changes PCFR by -6 to +3 pp; the paper reports the
+   opposite. Rank agreement with the paper on PCFR and ANCR is about zero
+   (-0.55 to +0.19).
+4. **ET is the one model whose per-run effect matches the paper** in sets
+   1-2 (PCFR +6 / +16 pp vs +11 / +20; fewer collisions per run). It costs
+   no time in either. In set 3 (slow robot) it has no effect in our
+   simulation.
+5. **The paper's ablation claims:** SH is significantly better (p < 0.05,
+   the paper's test) than 2, 3 and 0 of the 6 variants in sets 1-3 (paper:
+   6, 5, 6). The highest PCFR and lowest collisions per run of the 7 are
+   O-ET or ET+SW, never SH (paper: SH in every set). ET+SW is at least as
+   good as SH in all three sets (paper: comparable only in set 2).
+6. **Absolute levels.** The collision rates of the ET-based combinations
+   are 1.3-3.8x the paper's (O-ET, set 1: 3.5 vs 1.2 per minute; SH: 3.3-3.8x). Most runs
+   contain at least one collision, so AMD (0 for such runs) is near 0
+   everywhere.
+
+Two gaps remain: why SW and BW cost about 100 s here but 10-30 s in the
+paper, and why the ET planners collide more often per minute. The paper
+does not specify the obstacle speed distribution (we use a constant
+v_omax = 0.75 m/s, A9), which acts on both, so it is the first thing to test.
 
 ### Implementation bugs found by these experiments (all fixed, with regression tests)
 
